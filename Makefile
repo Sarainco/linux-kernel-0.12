@@ -5,11 +5,14 @@ LDFLAG := -Ttext 0x0 -s --oformat binary
 
 image : linux.img
 
-linux.img : tools/build bootsect setup
-	./tools/build bootsect setup none > $@
+linux.img : tools/build bootsect setup kernel/system
+	./tools/build bootsect setup kernel/system > $@
 
 tools/build : tools/build.c
 	gcc -o $@ $<
+
+kernel/system :
+	cd kernel; make system; cd ..
 
 bootsect : bootsect.o
 	$(LD) $(LDFLAG) -o $@ $<
@@ -29,6 +32,7 @@ clean:
 	rm -f setup
 	rm -f tools/build
 	rm -f linux.img
+	cd kernel; make clean; cd ..
 
 
 # qemu-system-i386 -boot a -fda linux.img
