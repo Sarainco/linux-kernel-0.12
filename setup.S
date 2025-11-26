@@ -1,4 +1,6 @@
 INITSEG = 0x9000
+SYSSEG  = 0x1000
+SETUPSEG = 0x9020
 
 .code16
 .text
@@ -93,7 +95,88 @@ do_move:
     jmp do_move
 
 end_move:
+    movw $0xb800, %ax
+    movw %ax, %gs
+    movb $0xf, %ah
+    movb $0x41, %al
+    movl $0x100, %edi
+    movw %ax, %gs:(%di)
+    movw $SETUPSEG, %ax
+    movw %ax, %ds
+    lgdt gdt_48
 
+    call empty_8042
+    movb $0xD1, %al
+    outb %al, $0x64
+    call empty_8042
+    movb $0xDF, %al
+    outb %al, $0x60
+    call empty_8042
+
+    movb $0x11, %al
+    outb %al,  $0x20
+    .word 0x00eb, 0x00eb
+    outb %al,  $0xA0
+    .word 0x00eb, 0x00eb
+    movb $0x20, %al
+    outb %al, $0x21
+    .word 0x00eb, 0x00eb
+    movb $0x28, %al
+    outb %al,   $0xA1
+    .word 0x00eb, 0x00eb
+    movb $0x04, %al
+    outb %al, $0x21
+    .word 0x00eb, 0x00eb
+    movb $0x02, %al
+    outb %al, $0xA1
+
+    .word 0x00eb, 0x00eb
+    movb $0x01, %al
+    outb %al, $0x21
+    .word 0x00eb, 0x00eb
+    outb %al, $0xA1
+    .word 0x00eb, 0x00eb
+    movb $0xff, %al
+    outb %al, $0x21
+    .word 0x00eb, 0x00eb
+    outb %al, $0xA1
+
+
+    movl %cr0, %eax
+    xorb $1, %al
+    movl %eax, %cr0
+
+    .byte 0x66, 0xea
+    .long 0x0
+    .word 0x8
+
+empty_8042:
+    .word 0x00eb, 0x00eb
+    inb $0x64, %al
+    testb $2, %al
+    jnz empty_8042
+    ret
+
+gdt:
+    .word 0, 0, 0, 0
+
+    .word 0x07ff
+    .word 0x0000
+    .word 0x9A00
+    .word 0x00C0
+
+    .word 0x07ff
+    .word 0x0000
+    .word 0x9200
+    .word 0x00c0
+
+    .word 0xffff
+    .word 0x8000
+    .word 0x920b
+    .word 0x00c0
+gdt_48:
+    .word 0x800
+    .word 512+gdt, 0x9
 
 
 setup_msg:
