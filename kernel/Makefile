@@ -1,14 +1,23 @@
 GCC := gcc
-CCFLAG := -mcpu=i386 -I ../include -nostdinc -Wall -fomit-frame-pointer -c
-LDFLAG := -Ttext 0x0 -s --oformat binary
-OBJS :=  head.o
+CCFLAG := -I ../include -nostdinc -Wall -fomit-frame-pointer -c -fno-pic -m32
+LDFLAG := -Ttext 0x0 -s --oformat binary -m elf_i386
+INCDIR := ../include
+OBJS :=  head.o main.o chr_drv/chr_drv.a
 
 system: $(OBJS)
 	$(LD) $(LDFLAG) -e startup_32 -o $@ $^
 
 head.o : head.S
-	$(GCC) -traditional -c -o $@ $<
+	$(GCC) -m32 -traditional -c -o $@ $<
+
+main.o : main.c
+	$(GCC) $(CCFLAG) -o $@ $<
+
+chr_drv/chr_drv.a : chr_drv/*.c
+	cd chr_drv; make chr_drv.a; cd ..
 
 clean:
 	rm *.o
 	rm system
+	cd chr_drv; make clean; cd ..
+
