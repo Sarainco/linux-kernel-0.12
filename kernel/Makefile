@@ -2,13 +2,19 @@ GCC := gcc
 CCFLAG := -I ../include -nostdinc -Wall -fomit-frame-pointer -c -fno-pic -m32
 LDFLAG := -Ttext 0x0 -s --oformat binary -m elf_i386
 INCDIR := ../include
-OBJS :=  head.o main.o chr_drv/chr_drv.a
+OBJS :=  head.o main.o printk.o vsprintf.o chr_drv/chr_drv.a
 
 system: $(OBJS)
 	$(LD) $(LDFLAG) -e startup_32 -o $@ $^
 
 head.o : head.S
 	$(GCC) -m32 -traditional -c -o $@ $<
+
+printk.o : printk.c
+	$(GCC) $(CCFLAG) -o $@ $<
+
+vsprintf.o : vsprintf.c
+	$(GCC) $(CCFLAG) -o $@ $<
 
 main.o : main.c
 	$(GCC) $(CCFLAG) -o $@ $<
